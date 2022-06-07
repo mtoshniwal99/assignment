@@ -1,0 +1,153 @@
+Assignment: voting app
+
+commands: 
+login as: ec2-user
+Authenticating with public key "imported-openssh-key"
+Last login: Tue Jun  7 04:07:26 2022 from 182.74.120.34
+
+       __|  __|_  )
+       _|  (     /   Amazon Linux 2 AMI
+      ___|\___|___|
+
+https://aws.amazon.com/amazon-linux-2/
+2 package(s) needed for security, out of 9 available
+Run "sudo yum update" to apply all updates.
+[ec2-user@ip-172-31-24-118 ~]$ git --version
+git version 2.32.0
+[ec2-user@ip-172-31-24-118 ~]$ sudo su
+[root@ip-172-31-24-118 ec2-user]# git clone https://github.com/ashishrpandey/exa                                                                             mple-voting-app
+Cloning into 'example-voting-app'...
+remote: Enumerating objects: 494, done.
+remote: Total 494 (delta 0), reused 0 (delta 0), pack-reused 494
+Receiving objects: 100% (494/494), 236.17 KiB | 7.38 MiB/s, done.
+Resolving deltas: 100% (179/179), done.
+[root@ip-172-31-24-118 ec2-user]# ls
+example-voting-app  flaskapp
+[root@ip-172-31-24-118 ec2-user]# cd example-voting-app/
+[root@ip-172-31-24-118 example-voting-app]# ls
+architecture.png               docker-compose.yml  MAINTAINERS  worker
+dockercloud.yml                docker-stack.yml    README.md
+docker-compose-javaworker.yml  k8s-specifications  result
+docker-compose-simple.yml      LICENSE             vote
+[root@ip-172-31-24-118 example-voting-app]# cd k8s-specifications/
+[root@ip-172-31-24-118 k8s-specifications]# kubectl apply -f .
+deployment.apps/db created
+service/db created
+deployment.apps/redis created
+service/redis created
+deployment.apps/result created
+service/result created
+deployment.apps/vote created
+service/vote created
+deployment.apps/worker created
+[root@ip-172-31-24-118 k8s-specifications]# kubectl get po
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-flb2r        1/1     Running   0          7m53s
+redis-868d64d78-nxbv7     1/1     Running   0          7m52s
+result-5d57b59f4b-cfqj8   1/1     Running   0          7m52s
+vote-94849dc97-vsbhb      1/1     Running   0          7m52s
+worker-dd46d7584-ncl82    1/1     Running   0          7m52s
+[root@ip-172-31-24-118 k8s-specifications]# kubectl get sv
+error: the server doesn't have a resource type "sv"
+[root@ip-172-31-24-118 k8s-specifications]# kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+db           ClusterIP   10.110.193.145   <none>        5432/TCP         8m17s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          10d
+redis        ClusterIP   10.103.120.240   <none>        6379/TCP         8m17s
+result       NodePort    10.106.66.38     <none>        5001:31001/TCP   8m17s
+vote         NodePort    10.104.220.63    <none>        5000:31000/TCP   8m17s
+[root@ip-172-31-24-118 k8s-specifications]# ^C
+[root@ip-172-31-24-118 k8s-specifications]# kubectl get po -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP              NOD                                                                             E                                               NOMINATED NODE   READINESS GATES
+db-b54cd94f4-flb2r        1/1     Running   0          25m   192.168.107.5   ip-                                                                             172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+redis-868d64d78-nxbv7     1/1     Running   0          25m   192.168.107.6   ip-                                                                             172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+result-5d57b59f4b-cfqj8   1/1     Running   0          25m   192.168.107.7   ip-                                                                             172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+vote-94849dc97-vsbhb      1/1     Running   0          25m   192.168.107.8   ip-                                                                             172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+worker-dd46d7584-ncl82    1/1     Running   0          25m   192.168.107.9   ip-                                                                             172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+[root@ip-172-31-24-118 k8s-specifications]# kubectl get po -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP              NODE                                               NOMINATED NODE   READINESS GATES
+db-b54cd94f4-flb2r        1/1     Running   0          25m   192.168.107.5   ip-172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+redis-868d64d78-nxbv7     1/1     Running   0          25m   192.168.107.6   ip-172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+result-5d57b59f4b-cfqj8   1/1     Running   0          25m   192.168.107.7   ip-172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+vote-94849dc97-vsbhb      1/1     Running   0          25m   192.168.107.8   ip-172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+worker-dd46d7584-ncl82    1/1     Running   0          25m   192.168.107.9   ip-172-31-24-118.ap-southeast-1.compute.internal   <none>           <none>
+[root@ip-172-31-24-118 k8s-specifications]# ls
+db-deployment.yaml  redis-deployment.yaml  result-deployment.yaml  vote-deployment.yaml  worker-deployment.yaml
+db-service.yaml     redis-service.yaml     result-service.yaml     vote-service.yaml
+[root@ip-172-31-24-118 k8s-specifications]# vi vote-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+spec:
+  type: NodePort
+  ports:
+  - name: "vote-service"
+    port: 5000
+    targetPort: 80
+    nodePort: 31000
+  selector:
+    app: vote
+
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+"vote-service.yaml" 14L, 192B                                                                                                              1,1           All
+
+
+
+observations:
+result app nodeport was 10.106.66.38
+vote app nodeport was 10.104.220.63
+
+commands:
+[root@ip-172-31-24-118 k8s-specifications]# kubectl delete po vote-94849dc97-qsfhr
+pod "vote-94849dc97-qsfhr" deleted
+[root@ip-172-31-24-118 k8s-specifications]# kubectl delete po worker-dd46d7584-ncl82
+pod "worker-dd46d7584-ncl82" deleted
+
+
+obervation:
+
+both the applications are working fine after deleting vote pod and worker pod
+
+
+command:
+[root@ip-172-31-24-118 k8s-specifications]# kubectl delete po db-b54cd94f4-flb2r
+pod "db-b54cd94f4-flb2r" deleted
+
+observation:
+result pod did not work properly
+
+command:
+[root@ip-172-31-24-118 k8s-specifications]# kubectl delete po result-5d57b59f4b-cfqj8
+pod "result-5d57b59f4b-cfqj8" deleted
+
+observation: 
+now it is working by  deleting the result pod 
