@@ -1,0 +1,12 @@
+
+In this case we will use rolling update.
+It is the gradual process that allows to update application with some changes and no downtime.
+The previous pod is taken down and the updated one is deployed.
+The newly deployed application will have next version than previous application
+
+
+$kubectl patch deployment kubia -p '{"spec": {"minReadySeconds": xxx}}'
+ then we will perform set image command so it will update to this image in the update
+
+$set image deployment xxx
+then it will gradually change from previous version to new version
