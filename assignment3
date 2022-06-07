@@ -1,0 +1,23 @@
+Approach:
+
+- check the port status 
+command:
+sudo netstat -tulpn | grep LISTEN
+
+- If port is already listening, then  we should check the services whether it is over ClusterIP or NodePort.
+command: 
+kubectl get svc
+
+
+- If type ClusterIP, then we change it to NodePort 
+command:
+kubectl edit service #servicename
+
+-if not working ,we delete all the old pods and services and apply the replicaSet .yaml
+so that it will create the services again.
+
+command:
+kubectl apply -f replicaSet.yaml
+
+- we will run the application. If it still fails to run then the last option is to change the port in replicaSet.yaml
+
